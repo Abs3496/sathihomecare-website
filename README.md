@@ -62,42 +62,6 @@ Swagger UI is available at:
 http://localhost:8080/swagger-ui/index.html
 ```
 
-## Live Account Credentials
-
-- Admin: `Abhishekadmin@sathihomecare.in / adminabhishek@123`
-
-Customers sign up using the registration flow. Partner accounts are created by admin from the dashboard.
-
-## Environment Notes
-
-Frontend environment values:
-
-- `VITE_API_BASE_URL`
-- `VITE_RAZORPAY_KEY_ID`
-
-Backend environment values:
-
-- `SERVER_PORT`
-- `DB_URL`
-- `DB_USERNAME`
-- `DB_PASSWORD`
-- `JWT_SECRET`
-- `JWT_EXPIRATION_MS`
-- `RAZORPAY_KEY_ID`
-- `RAZORPAY_KEY_SECRET`
-- `JPA_DDL_AUTO`
-- `JPA_SHOW_SQL`
-- `APP_CORS_ALLOWED_ORIGINS`
-- `APP_BOOTSTRAP_ADMIN1_EMAIL`
-- `APP_BOOTSTRAP_ADMIN1_PASSWORD`
-
-## Production DB Note
-
-If the production MySQL database already exists, run these before the next backend deploy:
-
-- [backend/sql/mysql/prod_auth_schema_fix.sql](C:/Users/LENOVO/OneDrive/Desktop/sathi-front/sathi-front/backend/sql/mysql/prod_auth_schema_fix.sql:1)
-- [backend/sql/mysql/prod_diagnostics.sql](C:/Users/LENOVO/OneDrive/Desktop/sathi-front/sathi-front/backend/sql/mysql/prod_diagnostics.sql:1)
-
 ## Current Known Constraints
 
 - Checkout currently supports one service per booking.
