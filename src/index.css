@@ -4,11 +4,10 @@
   margin: 0;
   padding: 0;
 }
-
 html, body, #root {
   width: 100%;
   min-height: 100vh;
-  /* REMOVE overflow-x hidden for debugging */
+  overflow-x: hidden; /* ✅ FIX: horizontal scroll band karo */
 }
 
 /* ===== BASE ===== */
@@ -35,45 +34,33 @@ img, video, iframe {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.container {
-  padding: 0 16px;
+  padding: 0 16px; /* ✅ FIX: har container me padding */
 }
 
 @media (min-width: 768px) {
-  .container {
-    max-width: 720px;
-  }
+  .container { max-width: 720px; }
 }
-
 @media (min-width: 1024px) {
-  .container {
-    max-width: 960px;
-  }
+  .container { max-width: 960px; }
 }
-
 @media (min-width: 1280px) {
-  .container {
-    max-width: 1200px;
-  }
+  .container { max-width: 1200px; }
 }
 
 /* ===== GRID SYSTEM ===== */
 .grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 20px; /* ✅ FIX: thoda bada gap */
 }
 
 @media (min-width: 768px) {
-  .grid-2 {
+  .grid.grid-2 {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
 @media (min-width: 1024px) {
-  .grid-3 {
+  .grid.grid-3 {
     grid-template-columns: repeat(3, 1fr);
   }
 }
@@ -86,7 +73,6 @@ img, video, iframe {
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
   width: 100%;
 }
-
 .bigCard {
   width: 100%;
   padding: 20px;
@@ -97,10 +83,10 @@ img, video, iframe {
 /* ===== BUTTONS ===== */
 button {
   cursor: pointer;
-  transition: 0.3s;
+  transition: opacity 0.3s;
   min-height: 44px;
+  /* ✅ FIX: width: 100% remove — buttons ko auto width chahiye by default */
 }
-
 button:hover {
   opacity: 0.85;
 }
@@ -115,6 +101,10 @@ button:hover {
 /* ===== NAVBAR ===== */
 .mobile-menu-toggle {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px; /* ✅ FIX: touch target */
 }
 
 .hero-nav-group {
@@ -122,8 +112,15 @@ button:hover {
   flex-direction: column;
   gap: 10px;
   padding: 16px;
-  background: rgba(8, 31, 53, 0.92);
+  background: rgba(8, 31, 53, 0.95);
   border-radius: 16px;
+  /* ✅ FIX: mobile me full width dropdown */
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 999;
 }
 
 .hero-nav-group.is-open {
@@ -134,47 +131,40 @@ button:hover {
   .mobile-menu-toggle {
     display: none;
   }
-
   .hero-nav-group {
     display: flex;
     flex-direction: row;
     background: transparent;
     padding: 0;
+    position: static; /* ✅ FIX: desktop pe static position */
+    width: auto;
   }
 }
 
 /* ===== FOOTER ===== */
 .site-footer {
-  width: 100% !important;
-  max-width: 100% !important;
-  padding: 38px 24px 18px !important;
+  width: 100%;
+  padding: 38px 24px 18px;
+  /* ✅ FIX: !important hata diye, clean rules */
 }
 
-.site-footer .footer-grid {
-  width: 100% !important;
-  max-width: 1480px !important;
-  margin: 0 auto !important;
-}
-
+.site-footer .footer-grid,
 .footer-grid {
   width: 100%;
+  max-width: 1200px; /* ✅ FIX: 1480px bahut wide tha, site ke saath match karo */
+  margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 24px; /* ✅ FIX: footer columns me spacing */
 }
 
 .footer-brand {
   width: 100%;
-  grid-column: 1 / -1;
 }
 
 @media (min-width: 768px) {
   .footer-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .footer-brand {
-    grid-column: 1;
   }
 }
 
@@ -183,24 +173,27 @@ button:hover {
     grid-template-columns: repeat(4, 1fr);
     align-items: start;
   }
-  
   .footer-brand {
-    grid-column: 1;
     padding-right: 20px;
   }
 }
 
 .footer-legal-links {
   width: 100%;
-  max-width: 1480px !important;
-  margin: 20px auto 0 !important;
+  max-width: 1200px; /* ✅ FIX: match karo footer-grid se */
+  margin: 20px auto 0;
 }
 
 /* ===== FORMS ===== */
-input, select, textarea, button {
+input, select, textarea {
   width: 100%;
   max-width: 100%;
   font-size: 1rem;
+}
+/* ✅ FIX: button ko alag rakha — width: 100% sirf form ke andar */
+.form-group button,
+form button {
+  width: 100%;
 }
 
 /* ===== SMALL SCREEN FIXES ===== */
@@ -208,9 +201,11 @@ input, select, textarea, button {
   h1 {
     font-size: clamp(1.8rem, 6vw, 2.5rem);
   }
-
   .container {
     padding: 0 12px;
+  }
+  .card, .bigCard {
+    border-radius: 10px; /* ✅ FIX: mobile pe thoda kam radius */
   }
 }
 
@@ -219,18 +214,10 @@ input, select, textarea, button {
   overflow-x: hidden;
 }
 
-/* ===== FORCE FIX (GUARANTEED) ===== */
-body > div, 
+/* ===== ROOT FIX ===== */
+/* ✅ FIX: force fix simplify kiya, !important kam use */
+body > div,
 #root > div {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-footer, .footer-grid {
-  width: 100% !important;
-}
-
-.page-shell, .container {
-  margin-left: auto !important;
-  margin-right: auto !important;
+  width: 100%;
+  max-width: 100%;
 }
