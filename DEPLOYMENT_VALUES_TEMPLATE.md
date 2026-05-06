@@ -33,12 +33,13 @@ Fill this once before final deployment.
 - Database Username:
 - Database Password:
 
-## 5. Razorpay
+## 5. UPI Payments
 
-- Razorpay Mode: `Test / Live`
-- Razorpay Key ID:
-- Razorpay Key Secret:
-- Webhook Secret:
+- UPI ID: `8090806731@ybl`
+- Merchant Name: `SATHIHOMECARE`
+- Support WhatsApp:
+- Resend API Key:
+- Admin Notification Email:
 
 ## 6. Security
 

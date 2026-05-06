@@ -9,7 +9,7 @@ Sathi Homecare is a full-stack homecare booking platform with:
 - service catalogue browsing
 - booking creation and tracking
 - admin partner/service management
-- Razorpay-backed payment order and verification endpoints
+- direct UPI payment intents with UTR/proof verification endpoints
 
 ## Project Structure
 
@@ -62,8 +62,46 @@ Swagger UI is available at:
 http://localhost:8080/swagger-ui/index.html
 ```
 
+
+
+Customers sign up using the registration flow. Partner accounts are created by admin from the dashboard.
+
+## Environment Notes
+
+Frontend environment values:
+
+- `VITE_API_BASE_URL`
+
+Backend environment values:
+
+- `SERVER_PORT`
+- `DB_URL`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `JWT_SECRET`
+- `JWT_EXPIRATION_MS`
+- `APP_PAYMENT_UPI_ID`
+- `APP_PAYMENT_MERCHANT_NAME`
+- `APP_PAYMENT_SUPPORT_WHATSAPP`
+- `APP_PAYMENT_PROOF_UPLOAD_DIR`
+- `APP_EMAIL_FROM`
+- `APP_EMAIL_ADMIN_TO`
+- `RESEND_API_KEY`
+- `JPA_DDL_AUTO`
+- `JPA_SHOW_SQL`
+- `APP_CORS_ALLOWED_ORIGINS`
+- `APP_BOOTSTRAP_ADMIN1_EMAIL`
+- `APP_BOOTSTRAP_ADMIN1_PASSWORD`
+
+## Production DB Note
+
+If the production MySQL database already exists, run these before the next backend deploy:
+
+- [backend/sql/mysql/prod_auth_schema_fix.sql](C:/Users/LENOVO/OneDrive/Desktop/sathi-front/sathi-front/backend/sql/mysql/prod_auth_schema_fix.sql:1)
+- [backend/sql/mysql/prod_diagnostics.sql](C:/Users/LENOVO/OneDrive/Desktop/sathi-front/sathi-front/backend/sql/mysql/prod_diagnostics.sql:1)
+
 ## Current Known Constraints
 
 - Checkout currently supports one service per booking.
-- Cash-on-visit is shown in the UI, but the active backend flow expects online payment.
+- Online payment uses UPI deep links, QR fallback, and post-payment UTR submission.
 - Java 21 is the target baseline; the backend build now also enables Byte Buddy experimental mode during tests to behave better on newer JDKs.

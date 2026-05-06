@@ -14,8 +14,8 @@ Before deployment, keep these ready:
 - frontend domain
 - backend domain
 - production database credentials
-- live Razorpay Key ID
-- live Razorpay Key Secret
+- production UPI ID `8090806731@ybl`
+- optional Resend API key for confirmation emails
 - final JWT secret
 - support email and phone
 
@@ -26,7 +26,6 @@ Create a production `.env` file using [.env.production.example](C:/Users/LENOVO/
 Required values:
 
 - `VITE_API_BASE_URL=https://your-backend-domain/api`
-- `VITE_RAZORPAY_KEY_ID=your_live_key_id`
 
 ## 3. Backend Environment
 
@@ -40,8 +39,13 @@ Required values:
 - `DB_PASSWORD`
 - `JWT_SECRET`
 - `JWT_EXPIRATION_MS`
-- `RAZORPAY_KEY_ID`
-- `RAZORPAY_KEY_SECRET`
+- `APP_PAYMENT_UPI_ID`
+- `APP_PAYMENT_MERCHANT_NAME`
+- `APP_PAYMENT_SUPPORT_WHATSAPP`
+- `APP_PAYMENT_PROOF_UPLOAD_DIR`
+- `APP_EMAIL_FROM`
+- `APP_EMAIL_ADMIN_TO`
+- `RESEND_API_KEY`
 - `APP_CORS_ALLOWED_ORIGINS`
 - `APP_BOOTSTRAP_ADMIN1_EMAIL`
 - `APP_BOOTSTRAP_ADMIN1_PASSWORD`
@@ -75,7 +79,7 @@ Confirm:
 - partner accounts have matching `partner_profiles.employee_id`
 - `/api/health` or actuator health is reachable
 - CORS allows your frontend domain
-- payment order creation works with live/test keys as intended
+- UPI payment intent creation returns the correct UPI ID and QR link
 
 ## 6. Frontend Checks After Deploy
 
@@ -85,7 +89,7 @@ Confirm:
 - services page loads correctly
 - customer registration works
 - login works
-- checkout opens Razorpay popup
+- checkout opens UPI app buttons and QR fallback
 - legal pages open from footer
 - admin dashboard loads
 - customer dashboard loads
@@ -114,8 +118,8 @@ Run this exact end-to-end test:
 Test these before launch:
 
 - invalid login
-- payment popup close without payment
-- payment failure from gateway
+- UPI app not installed fallback
+- invalid UTR/payment proof rejection
 - retry payment from customer dashboard
 - booking remains unassignable until payment success
 - customer cancellation flow
@@ -125,7 +129,7 @@ Test these before launch:
 Do not launch until these are confirmed:
 
 - production SQL fix has been applied on Hostinger
-- real Razorpay keys are configured
+- production UPI ID and optional email settings are configured
 - backend is on production database
 - JWT secret is changed from placeholder
 - admin login works in production
@@ -150,7 +154,7 @@ After launch, strongly consider:
 - [ ] frontend deployed
 - [ ] env values configured
 - [ ] DB connected
-- [ ] Razorpay live keys added
+- [ ] UPI payment settings added
 - [ ] legal pages verified
 - [ ] customer booking tested
 - [ ] payment tested

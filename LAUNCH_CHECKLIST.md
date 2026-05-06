@@ -14,18 +14,16 @@ This checklist tracks what is already completed in the product and what still ne
 
 ## 2. Payment Flow
 
-- [x] Razorpay checkout popup integrated
-- [x] Payment verification wired through backend
+- [x] UPI deep-link checkout integrated
+- [x] UTR/proof verification wired through backend
 - [x] Pending-payment retry flow added
 - [x] Admin cannot assign unpaid bookings
 - [x] Legal consent checkbox added before booking
-- [ ] Add real `VITE_RAZORPAY_KEY_ID`
-- [ ] Add real backend `RAZORPAY_KEY_ID`
-- [ ] Add real backend `RAZORPAY_KEY_SECRET`
-- [ ] Test payment success flow in Razorpay test mode
-- [ ] Test payment failure flow
-- [ ] Test popup dismiss and retry flow
-- [ ] Test live payment after merchant activation
+- [ ] Confirm production UPI ID `8090806731@ybl`
+- [ ] Configure `RESEND_API_KEY` if email delivery should be active
+- [ ] Test UPI app launch on Android
+- [ ] Test QR fallback from desktop
+- [ ] Test payment proof upload and retry flow
 
 ## 3. Legal and Compliance
 
@@ -99,7 +97,7 @@ This checklist tracks what is already completed in the product and what still ne
 
 Minimum required before launch:
 
-- real Razorpay keys configured
+- production UPI ID and optional Resend email configured
 - effective dates filled
 - production env configured
 - one successful end-to-end payment tested

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePageSeo } from "../../hooks/usePageSeo";
 import BookingCard from "../../components/BookingCard";
 import { useAuth } from "../../hooks/useAuth";
-import { launchRazorpayPayment } from "../../utils/razorpay";
+import { SATHI_UPI_ID, buildQrCodeUrl, buildWhatsAppSupportUrl, launchUpiIntent, upiApps } from "../../utils/upiPayment";
 
 export default function UserDashboard() {
   usePageSeo({
@@ -11,7 +11,7 @@ export default function UserDashboard() {
     description: "Manage your Sathi Homecare profile, track bookings and retry secure payments from your customer dashboard."
   });
 
-  const { customer, bookings, cancelBooking, logout, updateCustomerProfile, createPaymentOrder, verifyPayment, markPaymentFailed, fetchCustomerProfile } = useAuth();
+  const { customer, bookings, cancelBooking, logout, updateCustomerProfile, createPaymentOrder, verifyPayment, fetchCustomerProfile } = useAuth();
   const [profileForm, setProfileForm] = useState({
     fullName: customer?.name || "",
     email: customer?.email || "",
@@ -22,7 +22,11 @@ export default function UserDashboard() {
   const [paymentMessage, setPaymentMessage] = useState("");
   const [paymentError, setPaymentError] = useState("");
   const [payingBookingId, setPayingBookingId] = useState(null);
-  const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || "";
+  const [paymentIntent, setPaymentIntent] = useState(null);
+  const [paymentBooking, setPaymentBooking] = useState(null);
+  const [selectedApp, setSelectedApp] = useState(upiApps[0]);
+  const [utrNumber, setUtrNumber] = useState("");
+  const [screenshot, setScreenshot] = useState(null);
 
   useEffect(() => {
     fetchCustomerProfile().catch(() => {});
@@ -55,30 +59,56 @@ export default function UserDashboard() {
   const handlePayNow = async (booking) => {
     setPayingBookingId(booking.id);
     setPaymentError("");
-    setPaymentMessage("Preparing secure payment gateway...");
+    setPaymentMessage("Preparing UPI payment options...");
 
     try {
-      const order = await createPaymentOrder(booking.id);
-      await launchRazorpayPayment({
-        razorpayKeyId,
-        booking,
-        order,
-        prefill: {
-          name: customer?.name || booking.customer || "",
-          email: customer?.email || booking.customerEmail || "",
-          contact: customer?.phone || booking.patientPhone || ""
-        },
-        verifyPayment,
-        markPaymentFailed,
-        onStepChange: (step) => {
-          if (step === "verifying") {
-            setPaymentMessage(`Verifying payment for booking #${booking.id}...`);
-          }
-        }
-      });
-      setPaymentMessage(`Payment completed successfully for booking #${booking.id}.`);
+      const intent = await createPaymentOrder(booking.id);
+      setPaymentIntent(intent);
+      setPaymentBooking(booking);
+      setPaymentMessage(`UPI payment ready for booking #${booking.id}. Pay and submit your UTR below.`);
     } catch (err) {
-      setPaymentError(err?.message || "Unable to complete payment right now.");
+      setPaymentError(err?.message || "Unable to prepare UPI payment right now.");
+      setPaymentMessage("");
+    } finally {
+      setPayingBookingId(null);
+    }
+  };
+
+  const handleLaunchUpi = (app) => {
+    if (!paymentIntent?.upiUri) return;
+    setSelectedApp(app);
+    setPaymentMessage(`Opening ${app.name}. Return here after payment and enter your UTR.`);
+    launchUpiIntent(paymentIntent.upiUri, app);
+  };
+
+  const handleConfirmPayment = async (event) => {
+    event.preventDefault();
+    const cleanUtr = utrNumber.trim().replace(/\s+/g, "");
+    if (!paymentBooking || !paymentIntent) return;
+    if (!/^[A-Za-z0-9]{8,24}$/.test(cleanUtr)) {
+      setPaymentError("Enter a valid UPI transaction ID or UTR.");
+      return;
+    }
+
+    setPayingBookingId(paymentBooking.id);
+    setPaymentError("");
+    setPaymentMessage(`Submitting payment proof for booking #${paymentBooking.id}...`);
+
+    try {
+      await verifyPayment({
+        bookingId: paymentBooking.id,
+        gatewayOrderId: paymentIntent.gatewayOrderId,
+        utrNumber: cleanUtr,
+        paymentApp: selectedApp?.name || "UPI",
+        screenshot
+      });
+      setPaymentMessage(`Payment submitted successfully for booking #${paymentBooking.id}.`);
+      setPaymentIntent(null);
+      setPaymentBooking(null);
+      setUtrNumber("");
+      setScreenshot(null);
+    } catch (err) {
+      setPaymentError(err?.message || "Unable to submit payment proof right now.");
       setPaymentMessage("");
     } finally {
       setPayingBookingId(null);
@@ -173,6 +203,40 @@ export default function UserDashboard() {
           <p style={{ margin: "10px 0 0", color: "#667085" }}>Track your bookings, status, and cancel if needed.</p>
           {paymentMessage ? <p style={paymentSuccess}>{paymentMessage}</p> : null}
           {paymentError ? <p style={paymentFailure}>{paymentError}</p> : null}
+          {paymentIntent && paymentBooking ? (
+            <section style={upiRetryPanel}>
+              <div>
+                <p style={eyebrow}>UPI Payment Pending</p>
+                <h3 style={{ margin: "8px 0 0", color: "#102542", fontSize: "24px" }}>{paymentBooking.service}</h3>
+                <p style={{ margin: "8px 0 0", color: "#5b6878" }}>Amount: Rs. {paymentIntent.amount} | UPI ID: {paymentIntent.upiId || SATHI_UPI_ID}</p>
+              </div>
+              <div style={upiAppGrid}>
+                {upiApps.map((app) => (
+                  <button key={app.id} type="button" onClick={() => handleLaunchUpi(app)} style={{ ...upiAppButton, borderColor: app.accent }}>
+                    <span style={{ ...upiIcon, background: app.accent }}>{app.icon}</span>
+                    {app.name}
+                  </button>
+                ))}
+              </div>
+              <div style={upiProofGrid}>
+                <img src={paymentIntent.qrCodeUrl || buildQrCodeUrl(paymentIntent.upiUri)} alt="UPI QR code" style={qrImage} />
+                <form onSubmit={handleConfirmPayment} style={{ display: "grid", gap: "12px" }}>
+                  <label style={labelStyle}>
+                    Transaction ID / UTR
+                    <input value={utrNumber} onChange={(event) => setUtrNumber(event.target.value)} style={inputStyle} />
+                  </label>
+                  <label style={labelStyle}>
+                    Screenshot or PDF proof (optional)
+                    <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={(event) => setScreenshot(event.target.files?.[0] || null)} style={inputStyle} />
+                  </label>
+                  <button type="submit" disabled={payingBookingId === paymentBooking.id} style={saveButton}>
+                    {payingBookingId === paymentBooking.id ? "Confirming..." : "Confirm Payment"}
+                  </button>
+                  <a href={buildWhatsAppSupportUrl(paymentBooking.id, utrNumber)} target="_blank" rel="noreferrer" style={whatsappLink}>Need Help? Contact Support on WhatsApp</a>
+                </form>
+              </div>
+            </section>
+          ) : null}
 
           <div style={{ display: "grid", gap: "16px", marginTop: "20px" }}>
             {myBookings.length ? (
@@ -371,4 +435,64 @@ const paymentFailure = {
   margin: "14px 0 0",
   color: "#ef4444",
   fontWeight: 700
+};
+
+const upiRetryPanel = {
+  marginTop: "18px",
+  background: "#ffffff",
+  borderRadius: "24px",
+  padding: "22px",
+  border: "1px solid #e6eef6",
+  boxShadow: "0 18px 42px rgba(15, 23, 42, 0.08)",
+  display: "grid",
+  gap: "16px"
+};
+
+const upiAppGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+  gap: "12px"
+};
+
+const upiAppButton = {
+  border: "1px solid",
+  borderRadius: "16px",
+  background: "#ffffff",
+  padding: "12px",
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  fontWeight: 800
+};
+
+const upiIcon = {
+  width: "36px",
+  height: "36px",
+  borderRadius: "12px",
+  color: "#ffffff",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: 900
+};
+
+const upiProofGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(240px, 100%), 1fr))",
+  gap: "16px",
+  alignItems: "start"
+};
+
+const qrImage = {
+  width: "min(260px, 100%)",
+  borderRadius: "18px",
+  padding: "10px",
+  background: "#f8fbff",
+  border: "1px solid #d7e3ef"
+};
+
+const whatsappLink = {
+  color: "#16a34a",
+  fontWeight: 800,
+  textDecoration: "none"
 };
