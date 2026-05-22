@@ -7,7 +7,6 @@ import consultationIcon from "./images/homepage/servicecouncilling.jpg";
 import nursingServiceImage from "./images/services/nursing.jpeg";
 import therapyServiceImage from "./images/services/therapy.jpeg";
 import counselingServiceImage from "./images/services/councilling.jpeg";
-import abhishekPlaceholder from "./images/founders/Abhishekpandey.jpeg";
 import dharmendraPlaceholder from "./images/founders/Dharmendra.jpg";
 import pinkuPlaceholder from "./images/founders/pinku.jpg";
 import logo from "./images/icons/logo.png";
@@ -31,7 +30,6 @@ export const serviceAssets = {
 };
 
 export const founderAssets = {
-  abhishek: abhishekPlaceholder,
   dharmendra: dharmendraPlaceholder,
   pinku: pinkuPlaceholder
 };

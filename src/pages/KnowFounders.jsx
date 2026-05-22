@@ -4,18 +4,6 @@ import { usePageSeo } from "../hooks/usePageSeo";
 
 const founders = [
   {
-    key: "abhishek",
-    name: "Abhishek Pandey",
-    role: "Founder & CEO",
-    summary: [
-      "Software Engineer",
-      "Handles product, tech and platform vision",
-      "Phone: 8090806731",
-      "Email: support@sathihomecare.in"
-    ],
-    image: founderAssets.abhishek
-  },
-  {
     key: "dharmendra",
     name: "Dharmendra Tiwari",
     role: "Co-Founder",
@@ -40,7 +28,7 @@ const founders = [
 export default function KnowFounders() {
   usePageSeo({
     title: "Know The Founders | Sathi Homecare",
-    description: "Meet the founding team behind Sathi Homecare, from product and platform leadership to ayurvedic therapy expertise and nursing operations."
+    description: "Meet the founding team behind Sathi Homecare, from ayurvedic therapy expertise to nursing operations."
   });
 
   return (
@@ -58,7 +46,7 @@ export default function KnowFounders() {
             Sathi Homecare is being built for families who need dependable support, clear coordination, and a premium service experience from discovery to care delivery.
           </p>
           <div style={heroMetrics}>
-            <Metric label="Founding roles" value="3" />
+            <Metric label="Founding roles" value="2" />
             <Metric label="Therapy experience" value="10+ yrs" />
             <Metric label="Nursing operations" value="5+ yrs" />
           </div>
@@ -68,7 +56,7 @@ export default function KnowFounders() {
           <img src={iconAssets.careHeart} alt="Care icon" width="64" height="64" />
           <h2 style={{ margin: "20px 0 0", fontSize: "28px", lineHeight: 1.2 }}>Premium care, real operators, and startup-level execution.</h2>
           <p style={{ margin: "14px 0 0", color: "rgba(255,255,255,0.82)", lineHeight: 1.8 }}>
-            The team combines software execution, ayurvedic expertise, and nursing operations to make the platform deployable in the real world instead of just visually polished.
+            The team combines ayurvedic expertise and nursing operations to make care delivery dependable in the real world.
           </p>
         </div>
       </section>
@@ -77,7 +65,7 @@ export default function KnowFounders() {
         <div style={sectionHeader} className="founders-header-grid">
           <div>
             <p style={eyebrowSecondary}>Founding team</p>
-            <h2 style={sectionTitle}>Card-based profiles with a cleaner launch-ready presentation</h2>
+            <h2 style={sectionTitle}>Profiles with a cleaner launch-ready presentation</h2>
           </div>
         </div>
 
