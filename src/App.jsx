@@ -15,6 +15,7 @@ import Blogs from "./pages/Blogs";
 import Faq from "./pages/Faq";
 import CartBar from "./components/CartBar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import SathiCareBot from "./components/SathiCareBot";
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
           }
         />
       </Routes>
+      <SathiCareBot phone="+91 94517 64251" />
     </BrowserRouter>
   );
 }
