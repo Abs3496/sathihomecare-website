@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "../api";
 import logo from "../assets/images/icons/logo.png";
 import { servicesData } from "../data/servicesData";
+import { bookingToLeadPayload, submitLeadCapture } from "../utils/leadCapture";
 
 const GROUPS = {
   nursing: { en: "Nursing", hi: "नर्सिंग" },
@@ -511,7 +512,15 @@ export default function SathiCareBot({
     const payload = { ...booking, submittedAt: new Date().toISOString() };
     (async () => {
       try {
-        const response = await apiFetch("/ai-receptionist/chat", {
+        await submitLeadCapture({
+          ...bookingToLeadPayload(payload, "AI Chat Widget", language),
+          page_url: window.location.href
+        });
+        const code = `SH-${Date.now().toString().slice(-6)}`;
+        setMessages((current) => [...current, { id: uid(), sender: "bot", text: `${t.sent} Reference ID: ${code}. ${t.finalPrice}`, chips: [t.talkHuman, t.bookAnother, t.whatsapp], stepKey: "postBooking", time: nowTime() }]);
+      } catch {
+        try {
+          const response = await apiFetch("/ai-receptionist/chat", {
           method: "POST",
           timeoutMs: 75000,
           retries: 2,
@@ -521,10 +530,11 @@ export default function SathiCareBot({
             confirmBooking: true
           })
         });
-        const code = response?.booking?.bookingCode || `SC${Date.now().toString().slice(-7)}`;
-        setMessages((current) => [...current, { id: uid(), sender: "bot", text: `${t.sent} Reference ID: ${code}. ${t.finalPrice}`, chips: [t.talkHuman, t.bookAnother, t.whatsapp], stepKey: "postBooking", time: nowTime() }]);
-      } catch (error) {
-        setMessages((current) => [...current, { id: uid(), sender: "bot", text: error?.message || t.error, chips: [t.callNow, t.whatsapp], stepKey: "human", time: nowTime() }]);
+          const code = response?.booking?.bookingCode || `SC${Date.now().toString().slice(-7)}`;
+          setMessages((current) => [...current, { id: uid(), sender: "bot", text: `${t.sent} Reference ID: ${code}. ${t.finalPrice}`, chips: [t.talkHuman, t.bookAnother, t.whatsapp], stepKey: "postBooking", time: nowTime() }]);
+        } catch (error) {
+          setMessages((current) => [...current, { id: uid(), sender: "bot", text: error?.message || t.error, chips: [t.callNow, t.whatsapp], stepKey: "human", time: nowTime() }]);
+        }
       } finally {
         setIsTyping(false);
       }

@@ -13,6 +13,7 @@ import {
   launchUpiIntent,
   upiApps
 } from "../utils/upiPayment";
+import { bookingToLeadPayload, isLeadCaptureConfigured, submitLeadCapture } from "../utils/leadCapture";
 
 const initialPatientForm = {
   customerName: "",
@@ -94,9 +95,6 @@ export default function Checkout() {
     if (cart.length > 1) {
       return "Backend currently supports one service per booking. Please keep only one service in the cart for checkout.";
     }
-    if (!customer) {
-      return "Please login before placing your booking.";
-    }
     if (!policyAccepted) {
       return "Please accept the Privacy Policy, Terms & Conditions, and Refund Policy before placing the booking.";
     }
@@ -113,6 +111,36 @@ export default function Checkout() {
     return "";
   };
 
+  const buildCheckoutLead = () => {
+    const selectedService = cart[0];
+    return bookingToLeadPayload({
+      customerName: patientForm.customerName,
+      customerPhone: patientForm.customerPhone,
+      patientName: patientForm.patientName,
+      patientPhone: patientForm.patientPhone,
+      patientAddress: address || patientForm.patientAddress,
+      patientIssues: patientForm.patientIssues,
+      city: patientForm.city,
+      serviceName: selectedService?.name || "",
+      preferredTime: "Manual website checkout"
+    }, "Manual Website Form", "en");
+  };
+
+  const submitManualLead = async () => {
+    if (!isLeadCaptureConfigured()) {
+      throw new Error("Online booking is not configured yet. Please call or WhatsApp us and we will book you right away.");
+    }
+    const lead = buildCheckoutLead();
+    await submitLeadCapture({
+      ...lead,
+      notes: [
+        lead.notes,
+        `Cart total: Rs. ${grandTotal}`,
+        "Customer submitted checkout form without account payment flow."
+      ].filter(Boolean).join(" | ")
+    });
+  };
+
   const handlePlaceOrder = async () => {
     const validationError = validateBookingDetails();
     if (validationError) {
@@ -127,6 +155,20 @@ export default function Checkout() {
 
     try {
       const selectedService = cart[0];
+      if (!customer) {
+        setOrderMessage("Submitting your booking request...");
+        await submitManualLead();
+        setSuccessBooking({
+          id: `LEAD-${Date.now().toString().slice(-6)}`,
+          service: selectedService?.name || "Sathi Homecare service",
+          amount: grandTotal,
+          utrNumber: "Pending",
+          paymentApp: "Coordinator callback"
+        });
+        clearCart();
+        return;
+      }
+
       const booking = pendingBooking || await addBooking({
         serviceId: selectedService?.id,
         service: selectedService?.name || "",
@@ -144,6 +186,16 @@ export default function Checkout() {
       });
 
       setPendingBooking(booking);
+      const lead = buildCheckoutLead();
+      submitLeadCapture({
+        ...lead,
+        source: "Manual Website Form",
+        notes: [
+          lead.notes,
+          `Backend booking ID: ${booking.id}`,
+          `Cart total: Rs. ${grandTotal}`
+        ].filter(Boolean).join(" | ")
+      }).catch(() => {});
       setPaymentStep("payment-ready");
       setOrderMessage("Choose a UPI app or scan the QR code to pay.");
       const intent = await createPaymentOrder(booking.id);
@@ -244,27 +296,30 @@ export default function Checkout() {
   };
 
   if (successBooking) {
+    const isCallbackLead = successBooking.paymentApp === "Coordinator callback";
     return (
       <div style={pageStyle} className="page-padding upi-checkout-page">
         <a className="floating-whatsapp" href={buildWhatsAppSupportUrl(successBooking.id, successBooking.utrNumber)} target="_blank" rel="noreferrer">
           WhatsApp Support
         </a>
         <section style={successCard}>
-          <p style={sectionEyebrow}>Payment submitted</p>
-          <h1 style={successTitle}>Your care booking is confirmed</h1>
+          <p style={sectionEyebrow}>{isCallbackLead ? "Callback request submitted" : "Payment submitted"}</p>
+          <h1 style={successTitle}>{isCallbackLead ? "Our care coordinator will call you shortly" : "Your care booking is confirmed"}</h1>
           <p style={successText}>
-            We have recorded your UPI transaction details and sent the booking confirmation email if email delivery is configured.
+            {isCallbackLead
+              ? "We have received your service request. Login is only needed when you want online UPI tracking and dashboard history."
+              : "We have recorded your UPI transaction details and sent the booking confirmation email if email delivery is configured."}
           </p>
           <div style={successDetails}>
-            <span>Booking ID: #{successBooking.id}</span>
+            <span>{isCallbackLead ? "Lead ID" : "Booking ID"}: #{successBooking.id}</span>
             <span>Service: {successBooking.service}</span>
-            <span>Amount paid: Rs. {successBooking.amount}</span>
-            <span>Payment app: {successBooking.paymentApp}</span>
-            <span>UTR: {successBooking.utrNumber}</span>
+            {isCallbackLead ? <span>Estimated total: Rs. {successBooking.amount}</span> : <span>Amount paid: Rs. {successBooking.amount}</span>}
+            <span>{isCallbackLead ? "Next step" : "Payment app"}: {successBooking.paymentApp}</span>
+            {!isCallbackLead ? <span>UTR: {successBooking.utrNumber}</span> : null}
             <span>Patient: {patientForm.patientName}</span>
           </div>
           <div style={successActions}>
-            <button type="button" onClick={handleDownloadReceipt} style={secondaryButton}>Download Receipt</button>
+            {!isCallbackLead ? <button type="button" onClick={handleDownloadReceipt} style={secondaryButton}>Download Receipt</button> : null}
             <a href={buildWhatsAppSupportUrl(successBooking.id, successBooking.utrNumber)} target="_blank" rel="noreferrer" style={whatsappButton}>
               Contact Support on WhatsApp
             </a>
@@ -290,7 +345,7 @@ export default function Checkout() {
         {!customer ? (
           <div style={alertBox}>
             <p style={{ margin: 0, fontWeight: 800, color: "#102542" }}>Please login before booking a service.</p>
-            <p style={{ margin: "6px 0 0", color: "#4a5b72" }}>You need an account to place bookings and view payment status later. <Link to="/login">Go to login</Link>.</p>
+            <p style={{ margin: "6px 0 0", color: "#4a5b72" }}>You can submit a callback request now. Login is needed only for online UPI payment tracking. <Link to="/login">Go to login</Link>.</p>
           </div>
         ) : null}
 
@@ -404,12 +459,12 @@ export default function Checkout() {
               {orderError ? <p style={errorMessage}>{orderError}</p> : null}
 
               {!paymentIntent ? (
-                <button type="button" onClick={handlePlaceOrder} disabled={orderLoading || !customer} style={{
+                <button type="button" onClick={handlePlaceOrder} disabled={orderLoading} style={{
                   ...placeOrderButton,
-                  opacity: orderLoading || !customer ? 0.65 : 1,
-                  cursor: orderLoading || !customer ? "not-allowed" : "pointer"
+                  opacity: orderLoading ? 0.65 : 1,
+                  cursor: orderLoading ? "not-allowed" : "pointer"
                 }}>
-                  {orderLoading ? "Processing..." : pendingBooking ? "Resume UPI Payment" : customer ? "Place Order" : "Login to place order"}
+                  {orderLoading ? "Processing..." : pendingBooking ? "Resume UPI Payment" : customer ? "Place Order" : "Submit Booking Request"}
                 </button>
               ) : null}
             </section>

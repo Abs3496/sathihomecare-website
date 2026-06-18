@@ -33,7 +33,7 @@ describe("Checkout page", () => {
     });
   });
 
-  it("shows login prompt when customer is not logged in", () => {
+  it("lets guests submit a callback request without login", () => {
     render(
       <MemoryRouter>
         <Checkout />
@@ -41,7 +41,7 @@ describe("Checkout page", () => {
     );
 
     expect(screen.getByText("Please login before booking a service.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Login to place order" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Submit Booking Request" })).toBeEnabled();
   });
 
   it("shows validation error when logged-in customer submits incomplete checkout", async () => {
